@@ -1,0 +1,8 @@
+name: Itemizer
+version: 1.2.2
+author: Technius
+main: net.skycraftmc.Itemizer.ItemizerPlugin
+commands:
+    itemizer:
+        description: Itemizer menu
+        usage: /itemizer <args>
