@@ -1,6 +1,7 @@
 package net.skycraftmc.Itemizer;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.bukkit.ChatColor;
@@ -12,8 +13,11 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
+import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 public class ItemizerPlugin extends JavaPlugin
 {
@@ -29,6 +33,7 @@ public class ItemizerPlugin extends JavaPlugin
 		new CmdDesc("/itemizer name <name>", "Names your item", "itemizer.name"),
 		new CmdDesc("/itemizer lore <lore>", "Sets the lore of your item", "itemizer.lore"),
 		new CmdDesc("/itemizer advlore", "Advanced lore editing commands", "itemizer.lore"),
+		new CmdDesc("/itemizer potion", "Potion editing commands", "itemizer.potion"),
 		new CmdDesc("/itemizer title <title>", "Titles your book", "itemizer.title"),
 		new CmdDesc("/itemizer author <name>", "Sets the author of your book", "itemizer.author"),
 		new CmdDesc("/itemizer head <name>", "Sets the player of your head", "itemizer.head"),
@@ -40,6 +45,12 @@ public class ItemizerPlugin extends JavaPlugin
 		new CmdDesc("/itemizer advlore add <lore>", "Adds a line of lore", "itemizer.lore"),
 		new CmdDesc("/itemizer advlore remove <index>", "Removes the line of lore", "itemizer.lore"),
 		new CmdDesc("/itemizer advlore change <index> <text>", "Changes a line of lore", "itemizer.lore")
+	};
+	private CmdDesc[] potionhelp = {
+		new CmdDesc("/itemizer potion help", "Shows this menu", null),
+		new CmdDesc("/itemizer potion add <effect> [level] <seconds>", "Adds the potion effect", "itemizer.potion"),
+		new CmdDesc("/itemizer potion remove <effect>", "Removes the potion effect", "itemizer.potion"),
+		new CmdDesc("/itemizer potion list", "Lists all potion effects", "itemizer.potion")
 	};
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args)
 	{
@@ -54,6 +65,7 @@ public class ItemizerPlugin extends JavaPlugin
 			else if(args[0].equalsIgnoreCase("author"))bookCmd(sender, args, true);
 			else if(args[0].equalsIgnoreCase("head"))headCmd(sender, args);
 			else if(args[0].equalsIgnoreCase("advlore"))advLoreCmd(sender, args);
+			else if(args[0].equalsIgnoreCase("potion"))potionCmd(sender, args);
 			else return msg(sender, ChatColor.GOLD + "Command unrecognized.  Type " + ChatColor.AQUA + "/itemizer help" + ChatColor.GOLD + " for help");
 		}
 		else
@@ -210,6 +222,95 @@ public class ItemizerPlugin extends JavaPlugin
 		sender.sendMessage(ChatColor.GREEN + "The player of the head in your hand has been set to \"" + args[1] + "\"!");
 		return true;
 	}
+	public boolean potionCmd(CommandSender sender, String[] args2)
+	{
+		String[] args = bumpArgs(args2);
+		if(args.length >= 1)
+		{
+			if(args[0].equalsIgnoreCase("help"))helpCmd(sender, args, potionhelp, "Potion Help");
+			else if(args[0].equalsIgnoreCase("add"))potionAddCmd(sender, args);
+			else if(args[0].equalsIgnoreCase("remove"))potionRemoveCmd(sender, args);
+			else if(args[0].equalsIgnoreCase("list"))potionListCmd(sender, args);
+			else return msg(sender, ChatColor.GOLD + "Command unrecognized.  Type " + ChatColor.AQUA + "/itemizer potion help" + ChatColor.GOLD + " for help");
+		}
+		else helpCmd(sender, args, potionhelp, "Potion Help");
+		return true;
+	}
+	public boolean potionAddCmd(CommandSender sender, String[] args)
+	{
+		if(noPerm(sender, "itemizer.potion"))return true;
+		if(noConsole(sender))return true;
+		Player player = (Player)sender;
+		ItemStack item = player.getItemInHand();
+		boolean r = false;
+		if(item == null)r = true;
+		if(item.getType() != Material.POTION)r = true;
+		if(r)return msg(sender, ChatColor.RED + "You need to hold a potion in your hand!");
+		try
+		{
+			PotionEffect pot;
+			if(args.length == 3)pot = parsePotionEffect(args[1], args[2], null);
+			else if(args.length == 4)pot = parsePotionEffect(args[1], args[3], args[2]);
+			else return usage(sender, "itemizer potion add <type> [level] <seconds>");
+			PotionMeta pm = (PotionMeta)item.getItemMeta();
+			if(pm.hasCustomEffect(pot.getType()))
+				return msg(sender, ChatColor.RED + "This potion already has " + pot.getType().getName() + "!");
+			pm.addCustomEffect(pot, false);
+			player.sendMessage(ChatColor.GREEN + pot.getType().getName() + " added to the potion.");
+			item.setItemMeta(pm);
+			player.setItemInHand(item);
+		}
+		catch(IllegalArgumentException iae)
+		{
+			sender.sendMessage(ChatColor.RED + iae.getMessage());
+		}
+		return true;
+	}
+	public boolean potionRemoveCmd(CommandSender sender, String[] args)
+	{
+		if(noPerm(sender, "itemizer.potion"))return true;
+		if(noConsole(sender))return true;
+		if(args.length != 2)return usage(sender, "itemizer potion remove <type>");
+		Player player = (Player)sender;
+		ItemStack item = player.getItemInHand();
+		boolean r = false;
+		if(item == null)r = true;
+		if(item.getType() != Material.POTION)r = true;
+		if(r)return msg(sender, ChatColor.RED + "You need to hold a potion in your hand!");
+		PotionEffectType t = PotionEffectType.getByName(args[1].toUpperCase());
+		if(t == null)return msg(sender, ChatColor.RED + "No such potion effect type: " + args[1]);
+		PotionMeta pm = (PotionMeta)item.getItemMeta();
+		if(!pm.hasCustomEffect(t))
+			return msg(sender, ChatColor.RED + "This potion doesn't have " + t.getName() + "!");
+		pm.removeCustomEffect(t);
+		item.setItemMeta(pm);
+		player.setItemInHand(item);
+		player.sendMessage(ChatColor.GREEN + t.getName() + " removed from the potion");
+		return true;
+	}
+	public boolean potionListCmd(CommandSender sender, String[] args)
+	{
+		if(noPerm(sender, "itemizer.potion"))return true;
+		StringBuilder sb = new StringBuilder();
+		ArrayList<String>n = new ArrayList<String>();
+		for(PotionEffectType e:PotionEffectType.values())
+		{
+			if(e != null)n.add(e.getName().toLowerCase());
+		}
+		Collections.sort(n);
+		boolean f = true;
+		for(String s:n)
+		{
+			if(f)
+			{
+				sb.append(s);
+				f = false;
+			}
+			else sb.append(", " + s);
+		}
+		sender.sendMessage(sb.toString());
+		return true;
+	}
 	public boolean advLoreCmd(CommandSender sender, String[] args2)
 	{
 		String[] args = bumpArgs(args2);
@@ -343,6 +444,41 @@ public class ItemizerPlugin extends JavaPlugin
 	private boolean usage(CommandSender sender, String cmd)
 	{
 		return msg(sender, ChatColor.RED + "Usage: " + (sender instanceof Player ? "/" : "") + cmd);
+	}
+	private PotionEffect parsePotionEffect(String effect, String seconds, String level) throws IllegalArgumentException
+	{
+		PotionEffectType t;
+		if(effect.equalsIgnoreCase("strength"))t = PotionEffectType.INCREASE_DAMAGE;
+		else if(effect.equalsIgnoreCase("health"))t = PotionEffectType.HEAL;
+		else
+		{
+			t = PotionEffectType.getByName(effect.toUpperCase());
+			if(t == null)throw new IllegalArgumentException("No such potion effect type: " + effect);
+		}
+		int sec;
+		int lvl = 1;
+		try
+		{
+			sec = Integer.parseInt(seconds);
+		}
+		catch(NumberFormatException nfe)
+		{
+			throw new IllegalArgumentException("\"" + seconds + "\" is not a valid number.");
+		}
+		if(sec <= 0)throw new IllegalArgumentException("Seconds must be positive.");
+		if(level != null)
+		{
+			try
+			{
+				lvl = Integer.parseInt(level);
+			}
+			catch(NumberFormatException nfe)
+			{
+				throw new IllegalArgumentException("\"" + level + "\" is not a valid number.");
+			}
+		}
+		if(lvl < 1)throw new IllegalArgumentException("Level must be positive.");
+		return new PotionEffect(t, sec*20, lvl - 1, true);
 	}
 	public void displayAction(ItemStack item, String data, int action)
 	{
