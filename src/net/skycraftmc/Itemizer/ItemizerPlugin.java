@@ -3,6 +3,9 @@ package net.skycraftmc.Itemizer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
+
+import net.minecraft.server.v1_6_R1.NBTTagCompound;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -34,6 +37,7 @@ public class ItemizerPlugin extends JavaPlugin
 		new CmdDesc("/itemizer lore <lore>", "Sets the lore of your item", "itemizer.lore"),
 		new CmdDesc("/itemizer advlore", "Advanced lore editing commands", "itemizer.lore"),
 		new CmdDesc("/itemizer potion", "Potion editing commands", "itemizer.potion"),
+		new CmdDesc("/itemizer attr", "Attribute editing commands", "itemizer.attribute"),
 		new CmdDesc("/itemizer title <title>", "Titles your book", "itemizer.title"),
 		new CmdDesc("/itemizer author <name>", "Sets the author of your book", "itemizer.author"),
 		new CmdDesc("/itemizer head <name>", "Sets the player of your head", "itemizer.head"),
@@ -52,6 +56,13 @@ public class ItemizerPlugin extends JavaPlugin
 		new CmdDesc("/itemizer potion remove <effect>", "Removes the potion effect", "itemizer.potion"),
 		new CmdDesc("/itemizer potion list", "Lists all potion effects", "itemizer.potion")
 	};
+	private CmdDesc[] attrhelp = {
+		new CmdDesc("/itemizer attr help", "Shows this menu", null),
+		new CmdDesc("/itemizer attr add <name> <type> <strength>", "Adds an attribute", "itemizer.attribute"),
+		new CmdDesc("/itemizer attr remove <name>", "Removes the attribute", "itemizer.attribute"),
+		new CmdDesc("/itemizer attr list", "Lists the item's attributes", "itemizer.attribute"),
+		new CmdDesc("/itemizer attr listattr", "Lists all supported attributes", "itemizer.attribute")
+	};
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args)
 	{
 		if(args.length >= 1)
@@ -66,6 +77,7 @@ public class ItemizerPlugin extends JavaPlugin
 			else if(args[0].equalsIgnoreCase("head"))headCmd(sender, args);
 			else if(args[0].equalsIgnoreCase("advlore"))advLoreCmd(sender, args);
 			else if(args[0].equalsIgnoreCase("potion"))potionCmd(sender, args);
+			else if(args[0].equalsIgnoreCase("attr"))attrCmd(sender, args);
 			else return msg(sender, ChatColor.GOLD + "Command unrecognized.  Type " + ChatColor.AQUA + "/itemizer help" + ChatColor.GOLD + " for help");
 		}
 		else
@@ -547,6 +559,95 @@ public class ItemizerPlugin extends JavaPlugin
 				((LeatherArmorMeta)meta).setColor(null);
 		}
 		item.setItemMeta(meta);
+	}
+	public boolean attrCmd(CommandSender sender, String[] args2)
+	{
+		String[] args = bumpArgs(args2);
+		if(args.length >= 1)
+		{
+			if(args[0].equalsIgnoreCase("help"))helpCmd(sender, args, attrhelp, "Attribute Help");
+			else if(args[0].equalsIgnoreCase("add"))attrAddCmd(sender, args);
+			else return msg(sender, ChatColor.GOLD + "Command unrecognized.  Type " + ChatColor.AQUA + "/itemizer attr help" + ChatColor.GOLD + " for help");
+		}
+		else helpCmd(sender, args, attrhelp, "Attribute Help");
+		return true;
+	}
+	public boolean attrAddCmd(CommandSender sender, String[] args)
+	{
+		if(args.length != 4)return usage(sender, "itemizer attr add <name> <type> <strength>");
+		if(noConsole(sender))return true;
+		Player player = (Player)sender;
+		Attributes a = Attributes.get(args[3]);
+		if(a == null)return msg(sender, ChatColor.RED + "\"" + args[3] + "\" is not a valid attribute type.");
+		double amount;
+		try
+		{
+			amount = Double.parseDouble(args[4]);
+		}
+		catch(NumberFormatException nfe)
+		{
+			return msg(sender, "\"" + ChatColor.RED + args[4] + "\" is not a valid number.");
+		}
+		if(a.op == 2)
+		{
+			if(amount < 0 || amount > 1)return msg(sender, ChatColor.RED + "The strength of this attribute type is a percentage value between 0 and 1.");
+		}
+		//TODO Remove when an update is available
+		net.minecraft.server.v1_6_R1.ItemStack nms = org.bukkit.craftbukkit.v1_6_R1.inventory.CraftItemStack.asNMSCopy(player.getItemInHand());
+		net.minecraft.server.v1_6_R1.NBTTagList attrmod = getAttrList(nms);
+		for(int i = 0; i < attrmod.size(); i ++)
+		{
+			net.minecraft.server.v1_6_R1.NBTTagCompound c = (NBTTagCompound)attrmod.get(i);
+			if(c.getString("Name").equals(args[1]))
+				return msg(player, ChatColor.RED + "An attribute with the name \"" + args[1] + "\" already exists!");
+		}
+		net.minecraft.server.v1_6_R1.NBTTagCompound c = new net.minecraft.server.v1_6_R1.NBTTagCompound();
+		c.set("Name", new net.minecraft.server.v1_6_R1.NBTTagString("", args[1]));
+		c.set("AttributeName", new net.minecraft.server.v1_6_R1.NBTTagString("", a.name));
+		c.set("Amount", new net.minecraft.server.v1_6_R1.NBTTagDouble("", amount));
+		c.set("Operation", new net.minecraft.server.v1_6_R1.NBTTagInt("", a.op));
+		UUID randUUID = UUID.randomUUID();
+		c.set("UUIDMost", new net.minecraft.server.v1_6_R1.NBTTagLong("", randUUID.getMostSignificantBits()));
+		c.set("UUIDLeast", new net.minecraft.server.v1_6_R1.NBTTagLong("", randUUID.getLeastSignificantBits()));
+		return true;
+	}
+	private net.minecraft.server.v1_6_R1.NBTTagList getAttrList(net.minecraft.server.v1_6_R1.ItemStack nms)
+	{
+		net.minecraft.server.v1_6_R1.NBTTagCompound tag = nms.tag;
+		if(tag == null)
+		{
+			tag = new net.minecraft.server.v1_6_R1.NBTTagCompound();
+			nms.tag = tag;
+		}
+		net.minecraft.server.v1_6_R1.NBTTagList attrmod = tag.getList("AttributeModifers");
+		if(attrmod == null)
+		{
+			attrmod = new net.minecraft.server.v1_6_R1.NBTTagList();
+			tag.set("AttributeModifiers", attrmod);
+		}
+		return attrmod;
+	}
+	private enum Attributes
+	{
+		DAMAGE(0, "generic.attackDamage"), 
+		MOVEMENT_SPEED(2, "generic.movementSpeed"), 
+		KNOCKBACK_RESISTANCE(2, "generic.knockbackResistance"),
+		MAX_HEALTH(0, "generic.maxHealth");
+		private int op;
+		private String name;
+		private Attributes(int op, String name)
+		{
+			this.op = op;
+			this.name = name;
+		}
+		private static Attributes get(String s)
+		{
+			for(Attributes a:values())
+			{
+				if(a.name.toLowerCase().equals(s))return a;
+			}
+			return null;
+		}
 	}
 	private String col(String s)
 	{
