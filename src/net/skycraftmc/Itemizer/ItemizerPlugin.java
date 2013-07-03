@@ -567,6 +567,8 @@ public class ItemizerPlugin extends JavaPlugin
 		{
 			if(args[0].equalsIgnoreCase("help"))helpCmd(sender, args, attrhelp, "Attribute Help");
 			else if(args[0].equalsIgnoreCase("add"))attrAddCmd(sender, args);
+			else if(args[0].equalsIgnoreCase("remove"))attrRemoveCmd(sender, args);
+			else if(args[0].equalsIgnoreCase("list"))attrListCmd(sender, args);
 			else return msg(sender, ChatColor.GOLD + "Command unrecognized.  Type " + ChatColor.AQUA + "/itemizer attr help" + ChatColor.GOLD + " for help");
 		}
 		else helpCmd(sender, args, attrhelp, "Attribute Help");
@@ -574,23 +576,20 @@ public class ItemizerPlugin extends JavaPlugin
 	}
 	public boolean attrAddCmd(CommandSender sender, String[] args)
 	{
-		if(args.length != 4)return usage(sender, "itemizer attr add <name> <type> <strength>");
+		if(noPerm(sender, "itemizer.attribute"))return true;
 		if(noConsole(sender))return true;
+		if(args.length != 4)return usage(sender, "itemizer attr add <name> <type> <strength>");
 		Player player = (Player)sender;
-		Attributes a = Attributes.get(args[3]);
-		if(a == null)return msg(sender, ChatColor.RED + "\"" + args[3] + "\" is not a valid attribute type.");
+		Attributes a = Attributes.get(args[2]);
+		if(a == null)return msg(sender, ChatColor.RED + "\"" + args[2] + "\" is not a valid attribute type.");
 		double amount;
 		try
 		{
-			amount = Double.parseDouble(args[4]);
+			amount = Double.parseDouble(args[3]);
 		}
 		catch(NumberFormatException nfe)
 		{
-			return msg(sender, "\"" + ChatColor.RED + args[4] + "\" is not a valid number.");
-		}
-		if(a.op == 2)
-		{
-			if(amount < 0 || amount > 1)return msg(sender, ChatColor.RED + "The strength of this attribute type is a percentage value between 0 and 1.");
+			return msg(sender, "\"" + ChatColor.RED + args[3] + "\" is not a valid number.");
 		}
 		//TODO Remove when an update is available
 		net.minecraft.server.v1_6_R1.ItemStack nms = org.bukkit.craftbukkit.v1_6_R1.inventory.CraftItemStack.asNMSCopy(player.getItemInHand());
@@ -609,6 +608,50 @@ public class ItemizerPlugin extends JavaPlugin
 		UUID randUUID = UUID.randomUUID();
 		c.set("UUIDMost", new net.minecraft.server.v1_6_R1.NBTTagLong("", randUUID.getMostSignificantBits()));
 		c.set("UUIDLeast", new net.minecraft.server.v1_6_R1.NBTTagLong("", randUUID.getLeastSignificantBits()));
+		attrmod.add(c);
+		nms.tag.set("AttributeModifiers", attrmod);
+		ItemStack i = org.bukkit.craftbukkit.v1_6_R1.inventory.CraftItemStack.asCraftMirror(nms);
+		player.setItemInHand(i);
+		player.sendMessage(ChatColor.GREEN + "Attribute added!");
+		return true;
+	}
+	public boolean attrRemoveCmd(CommandSender sender, String[] args)
+	{
+		if(noPerm(sender, "itemizer.attribute"))return true;
+		if(noConsole(sender))return true;
+		if(args.length != 2)return usage(sender, "itemizer attr remove <name>");
+		Player player = (Player)sender;
+		//TODO Remove when an update is available
+		net.minecraft.server.v1_6_R1.ItemStack nms = org.bukkit.craftbukkit.v1_6_R1.inventory.CraftItemStack.asNMSCopy(player.getItemInHand());
+		net.minecraft.server.v1_6_R1.NBTTagList attrmod = getAttrList(nms);
+		net.minecraft.server.v1_6_R1.NBTTagList nlist = new net.minecraft.server.v1_6_R1.NBTTagList();
+		boolean r = false;
+		for(int i = 0; i < attrmod.size(); i ++)
+		{
+			net.minecraft.server.v1_6_R1.NBTTagCompound c = (NBTTagCompound)attrmod.get(i);
+			if(!c.getString("Name").equals(args[1]))nlist.add(attrmod.get(i));
+			else r = true;
+		}
+		if(!r)return msg(sender, ChatColor.RED + "The attribute \"" + args[1] + "\" doesn't exist!");
+		nms.tag.set("AttributeModifiers", nlist);
+		ItemStack i = org.bukkit.craftbukkit.v1_6_R1.inventory.CraftItemStack.asCraftMirror(nms);
+		player.setItemInHand(i);
+		player.sendMessage(ChatColor.GREEN + "Attribute removed!");
+		return true;
+	}
+	public boolean attrListCmd(CommandSender sender, String[] args)
+	{
+		if(noPerm(sender, "itemizer.attribute"))return true;
+		if(noConsole(sender))return true;
+		if(args.length != 1)return usage(sender, "itemizer attr list");
+		Player player = (Player)sender;
+		net.minecraft.server.v1_6_R1.ItemStack nms = org.bukkit.craftbukkit.v1_6_R1.inventory.CraftItemStack.asNMSCopy(player.getItemInHand());
+		net.minecraft.server.v1_6_R1.NBTTagList attrmod = getAttrList(nms);
+		for(int i = 0; i < attrmod.size(); i ++)
+		{
+			net.minecraft.server.v1_6_R1.NBTTagCompound c = (NBTTagCompound)attrmod.get(i);
+			player.sendMessage(c.getString("Name") + ": " + Attributes.getByMCName(c.getString("AttributeName")) + "," + c.getDouble("Amount"));
+		}
 		return true;
 	}
 	private net.minecraft.server.v1_6_R1.NBTTagList getAttrList(net.minecraft.server.v1_6_R1.ItemStack nms)
@@ -619,13 +662,13 @@ public class ItemizerPlugin extends JavaPlugin
 			tag = new net.minecraft.server.v1_6_R1.NBTTagCompound();
 			nms.tag = tag;
 		}
-		net.minecraft.server.v1_6_R1.NBTTagList attrmod = tag.getList("AttributeModifers");
+		net.minecraft.server.v1_6_R1.NBTTagList attrmod = tag.getList("AttributeModifiers");
 		if(attrmod == null)
 		{
 			attrmod = new net.minecraft.server.v1_6_R1.NBTTagList();
 			tag.set("AttributeModifiers", attrmod);
 		}
-		return attrmod;
+		return tag.getList("AttributeModifiers");
 	}
 	private enum Attributes
 	{
@@ -644,7 +687,15 @@ public class ItemizerPlugin extends JavaPlugin
 		{
 			for(Attributes a:values())
 			{
-				if(a.name.toLowerCase().equals(s))return a;
+				if(a.name().toLowerCase().equalsIgnoreCase(s))return a;
+			}
+			return null;
+		}
+		private static Attributes getByMCName(String s)
+		{
+			for(Attributes a:values())
+			{
+				if(a.name.equalsIgnoreCase(s))return a;
 			}
 			return null;
 		}
