@@ -656,19 +656,16 @@ public class ItemizerPlugin extends JavaPlugin
 	}
 	private net.minecraft.server.v1_6_R1.NBTTagList getAttrList(net.minecraft.server.v1_6_R1.ItemStack nms)
 	{
-		net.minecraft.server.v1_6_R1.NBTTagCompound tag = nms.tag;
-		if(tag == null)
+		if(nms.tag == null)
 		{
-			tag = new net.minecraft.server.v1_6_R1.NBTTagCompound();
-			nms.tag = tag;
+			nms.tag = new net.minecraft.server.v1_6_R1.NBTTagCompound();
 		}
-		net.minecraft.server.v1_6_R1.NBTTagList attrmod = tag.getList("AttributeModifiers");
+		net.minecraft.server.v1_6_R1.NBTTagList attrmod = nms.tag.getList("AttributeModifiers");
 		if(attrmod == null)
 		{
-			attrmod = new net.minecraft.server.v1_6_R1.NBTTagList();
-			tag.set("AttributeModifiers", attrmod);
+			nms.tag.set("AttributeModifiers", new net.minecraft.server.v1_6_R1.NBTTagList());
 		}
-		return tag.getList("AttributeModifiers");
+		return nms.tag.getList("AttributeModifiers");
 	}
 	private enum Attributes
 	{
