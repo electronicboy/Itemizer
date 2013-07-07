@@ -58,7 +58,7 @@ public class ItemizerPlugin extends JavaPlugin
 	};
 	private CmdDesc[] attrhelp = {
 		new CmdDesc("/itemizer attr help", "Shows this menu", null),
-		new CmdDesc("/itemizer attr add <name> <type> <strength>", "Adds an attribute", "itemizer.attribute"),
+		new CmdDesc("/itemizer attr add <name> <type> <strength> [operation]", "Adds an attribute", "itemizer.attribute"),
 		new CmdDesc("/itemizer attr remove <name>", "Removes the attribute", "itemizer.attribute"),
 		new CmdDesc("/itemizer attr list", "Lists the item's attributes", "itemizer.attribute"),
 		new CmdDesc("/itemizer attr listattr", "Lists all supported attributes", "itemizer.attribute")
@@ -569,6 +569,7 @@ public class ItemizerPlugin extends JavaPlugin
 			else if(args[0].equalsIgnoreCase("add"))attrAddCmd(sender, args);
 			else if(args[0].equalsIgnoreCase("remove"))attrRemoveCmd(sender, args);
 			else if(args[0].equalsIgnoreCase("list"))attrListCmd(sender, args);
+			else if(args[0].equalsIgnoreCase("listall"))attrListAllCmd(sender, args);
 			else return msg(sender, ChatColor.GOLD + "Command unrecognized.  Type " + ChatColor.AQUA + "/itemizer attr help" + ChatColor.GOLD + " for help");
 		}
 		else helpCmd(sender, args, attrhelp, "Attribute Help");
@@ -578,7 +579,15 @@ public class ItemizerPlugin extends JavaPlugin
 	{
 		if(noPerm(sender, "itemizer.attribute"))return true;
 		if(noConsole(sender))return true;
-		if(args.length != 4)return usage(sender, "itemizer attr add <name> <type> <strength>");
+		int op = -1;
+		if(args.length == 5)
+		{
+			if(args[4].equalsIgnoreCase("add"))op = 0;
+			else if(args[4].equalsIgnoreCase("addmultiplier") || args[4].equalsIgnoreCase("addmult"))op = 1;
+			else if(args[4].equalsIgnoreCase("mult") || args[4].equalsIgnoreCase("multiplier"))op = 2;
+			else return msg(sender, ChatColor.RED + args[4] + " is not a valid operation.");
+		}
+		else if(args.length != 4)return usage(sender, "itemizer attr add <name> <type> <strength> [operation]");
 		Player player = (Player)sender;
 		Attributes a = Attributes.get(args[2]);
 		if(a == null)return msg(sender, ChatColor.RED + "\"" + args[2] + "\" is not a valid attribute type.");
@@ -604,7 +613,8 @@ public class ItemizerPlugin extends JavaPlugin
 		c.set("Name", new net.minecraft.server.v1_6_R1.NBTTagString("", args[1]));
 		c.set("AttributeName", new net.minecraft.server.v1_6_R1.NBTTagString("", a.name));
 		c.set("Amount", new net.minecraft.server.v1_6_R1.NBTTagDouble("", amount));
-		c.set("Operation", new net.minecraft.server.v1_6_R1.NBTTagInt("", a.op));
+		if(op == -1)op = a.op;
+		c.set("Operation", new net.minecraft.server.v1_6_R1.NBTTagInt("", op));
 		UUID randUUID = UUID.randomUUID();
 		c.set("UUIDMost", new net.minecraft.server.v1_6_R1.NBTTagLong("", randUUID.getMostSignificantBits()));
 		c.set("UUIDLeast", new net.minecraft.server.v1_6_R1.NBTTagLong("", randUUID.getLeastSignificantBits()));
@@ -647,11 +657,27 @@ public class ItemizerPlugin extends JavaPlugin
 		Player player = (Player)sender;
 		net.minecraft.server.v1_6_R1.ItemStack nms = org.bukkit.craftbukkit.v1_6_R1.inventory.CraftItemStack.asNMSCopy(player.getItemInHand());
 		net.minecraft.server.v1_6_R1.NBTTagList attrmod = getAttrList(nms);
+		if(attrmod.size() == 0)return msg(sender, ChatColor.YELLOW + "This item has no attributes.");
+		player.sendMessage(ChatColor.GREEN + "Item Attributes:");
 		for(int i = 0; i < attrmod.size(); i ++)
 		{
 			net.minecraft.server.v1_6_R1.NBTTagCompound c = (NBTTagCompound)attrmod.get(i);
-			player.sendMessage(c.getString("Name") + ": " + Attributes.getByMCName(c.getString("AttributeName")) + "," + c.getDouble("Amount"));
+			player.sendMessage(ChatColor.YELLOW + c.getString("Name") + ": " + Attributes.getByMCName(c.getString("AttributeName")) + "," + c.getDouble("Amount"));
 		}
+		return true;
+	}
+	public boolean attrListAllCmd(CommandSender sender, String[] args)
+	{
+		if(noPerm(sender, "itemizer.attribute"))return true;
+		if(args.length != 1)return usage(sender, "itemizer attr listall");
+		sender.sendMessage(ChatColor.GREEN + "Supported attribute types: ");
+		StringBuffer sb = new StringBuffer();
+		for(Attributes s:Attributes.values())
+		{
+			if(sb.length() > 0)sb.append(", ");
+			sb.append(s);
+		}
+		sender.sendMessage(ChatColor.YELLOW + sb.toString());
 		return true;
 	}
 	private net.minecraft.server.v1_6_R1.NBTTagList getAttrList(net.minecraft.server.v1_6_R1.ItemStack nms)
