@@ -1,7 +1,7 @@
 name: Itemizer
 version: 1.4.4
 author: Technius
-main: net.skycraftmc.Itemizer.ItemizerPlugin
+main: co.technius.itemizer.ItemizerPlugin
 commands:
     itemizer:
         description: Itemizer menu

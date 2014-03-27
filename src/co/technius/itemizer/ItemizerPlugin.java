@@ -1,4 +1,4 @@
-package net.skycraftmc.Itemizer;
+package co.technius.itemizer;
 
 import java.util.ArrayList;
 import java.util.Collections;
