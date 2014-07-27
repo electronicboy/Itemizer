@@ -5,18 +5,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import net.minecraft.server.v1_7_R3.NBTTagCompound;
-import net.minecraft.server.v1_7_R3.NBTTagDouble;
-import net.minecraft.server.v1_7_R3.NBTTagInt;
-import net.minecraft.server.v1_7_R3.NBTTagList;
-import net.minecraft.server.v1_7_R3.NBTTagLong;
-import net.minecraft.server.v1_7_R3.NBTTagString;
+import net.minecraft.server.v1_7_R4.NBTTagCompound;
+import net.minecraft.server.v1_7_R4.NBTTagDouble;
+import net.minecraft.server.v1_7_R4.NBTTagInt;
+import net.minecraft.server.v1_7_R4.NBTTagList;
+import net.minecraft.server.v1_7_R4.NBTTagLong;
+import net.minecraft.server.v1_7_R4.NBTTagString;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_7_R3.inventory.CraftItemStack;
+import org.bukkit.craftbukkit.v1_7_R4.inventory.CraftItemStack;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
@@ -607,7 +607,7 @@ public class ItemizerPlugin extends JavaPlugin
 			return msg(sender, "\"" + ChatColor.RED + args[3] + "\" is not a valid number.");
 		}
 		//TODO Remove when an update is available
-		net.minecraft.server.v1_7_R3.ItemStack nms = CraftItemStack.asNMSCopy(player.getItemInHand());
+		net.minecraft.server.v1_7_R4.ItemStack nms = CraftItemStack.asNMSCopy(player.getItemInHand());
 		NBTTagList attrmod = getAttrList(nms);
 		for(int i = 0; i < attrmod.size(); i ++)
 		{
@@ -638,7 +638,7 @@ public class ItemizerPlugin extends JavaPlugin
 		if(args.length != 2)return usage(sender, "itemizer attr remove <name>");
 		Player player = (Player)sender;
 		//TODO Remove when an update is available
-		net.minecraft.server.v1_7_R3.ItemStack nms = CraftItemStack.asNMSCopy(player.getItemInHand());
+		net.minecraft.server.v1_7_R4.ItemStack nms = CraftItemStack.asNMSCopy(player.getItemInHand());
 		NBTTagList attrmod = getAttrList(nms);
 		NBTTagList nlist = new NBTTagList();
 		boolean r = false;
@@ -661,7 +661,7 @@ public class ItemizerPlugin extends JavaPlugin
 		if(noConsole(sender))return true;
 		if(args.length != 1)return usage(sender, "itemizer attr list");
 		Player player = (Player)sender;
-		net.minecraft.server.v1_7_R3.ItemStack nms = CraftItemStack.asNMSCopy(player.getItemInHand());
+		net.minecraft.server.v1_7_R4.ItemStack nms = CraftItemStack.asNMSCopy(player.getItemInHand());
 		NBTTagList attrmod = getAttrList(nms);
 		if(attrmod.size() == 0)return msg(sender, ChatColor.YELLOW + "This item has no attributes.");
 		player.sendMessage(ChatColor.GREEN + "Item Attributes:");
@@ -686,7 +686,7 @@ public class ItemizerPlugin extends JavaPlugin
 		sender.sendMessage(ChatColor.YELLOW + sb.toString());
 		return true;
 	}
-	private NBTTagList getAttrList(net.minecraft.server.v1_7_R3.ItemStack nms)
+	private NBTTagList getAttrList(net.minecraft.server.v1_7_R4.ItemStack nms)
 	{
 		if(nms.tag == null)
 		{
