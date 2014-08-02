@@ -1,0 +1,8 @@
+name: Itemizer
+version: 1.4.6
+author: Technius
+main: co.technius.itemizer.ItemizerPlugin
+commands:
+    itemizer:
+        description: Itemizer menu
+        usage: /itemizer <args>
