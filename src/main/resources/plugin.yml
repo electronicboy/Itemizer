@@ -1,5 +1,5 @@
 name: Itemizer
-version: 1.4.6
+version: 1.4.7
 author: Technius
 main: co.technius.itemizer.ItemizerPlugin
 commands:
