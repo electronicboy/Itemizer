@@ -1,31 +1,19 @@
 package co.technius.itemizer;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-import net.minecraft.server.v1_8_R1.NBTTagCompound;
-import net.minecraft.server.v1_8_R1.NBTTagDouble;
-import net.minecraft.server.v1_8_R1.NBTTagInt;
-import net.minecraft.server.v1_8_R1.NBTTagList;
-import net.minecraft.server.v1_8_R1.NBTTagLong;
-import net.minecraft.server.v1_8_R1.NBTTagString;
+import net.minecraft.server.v1_8_R2.*;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_8_R1.inventory.CraftItemStack;
+import org.bukkit.craftbukkit.v1_8_R2.inventory.CraftItemStack;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.BookMeta;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.LeatherArmorMeta;
-import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.inventory.meta.*;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+
+import java.util.*;
 
 public class ItemizerPlugin extends JavaPlugin {
 
@@ -282,10 +270,10 @@ public class ItemizerPlugin extends JavaPlugin {
             return msg(sender, "\"" + ChatColor.RED + args[3] + "\" is not a valid number.");
         }
         //TODO Remove when an update is available
-        net.minecraft.server.v1_8_R1.ItemStack nms = CraftItemStack.asNMSCopy(player.getItemInHand());
+        net.minecraft.server.v1_8_R2.ItemStack nms = CraftItemStack.asNMSCopy(player.getItemInHand());
         NBTTagList attrmod = getAttrList(nms);
         for(int i = 0; i < attrmod.size(); i++) {
-            NBTTagCompound c = (NBTTagCompound)attrmod.get(i);
+            NBTTagCompound c = attrmod.get(i);
             if(c.getString("Name").equals(args[1])) {
                 return msg(player, ChatColor.RED + "An attribute with the name \"" + args[1] + "\" already exists!");
             }
@@ -367,14 +355,14 @@ public class ItemizerPlugin extends JavaPlugin {
             return usage(sender, "itemizer attr list");
         }
         Player player = (Player)sender;
-        net.minecraft.server.v1_8_R1.ItemStack nms = CraftItemStack.asNMSCopy(player.getItemInHand());
+        net.minecraft.server.v1_8_R2.ItemStack nms = CraftItemStack.asNMSCopy(player.getItemInHand());
         NBTTagList attrmod = getAttrList(nms);
         if(attrmod.size() == 0) {
             return msg(sender, ChatColor.YELLOW + "This item has no attributes.");
         }
         player.sendMessage(ChatColor.GREEN + "Item Attributes:");
         for(int i = 0; i < attrmod.size(); i++) {
-            NBTTagCompound c = (NBTTagCompound)attrmod.get(i);
+            NBTTagCompound c = attrmod.get(i);
             player.sendMessage(ChatColor.YELLOW + c.getString("Name") + ": " + Attributes.getByMCName(c.getString("AttributeName")) + "," + c.getDouble("Amount"));
         }
         return true;
@@ -392,12 +380,12 @@ public class ItemizerPlugin extends JavaPlugin {
         }
         Player player = (Player)sender;
         //TODO Remove when an update is available
-        net.minecraft.server.v1_8_R1.ItemStack nms = CraftItemStack.asNMSCopy(player.getItemInHand());
+        net.minecraft.server.v1_8_R2.ItemStack nms = CraftItemStack.asNMSCopy(player.getItemInHand());
         NBTTagList attrmod = getAttrList(nms);
         NBTTagList nlist = new NBTTagList();
         boolean r = false;
         for(int i = 0; i < attrmod.size(); i++) {
-            NBTTagCompound c = (NBTTagCompound)attrmod.get(i);
+            NBTTagCompound c = attrmod.get(i);
             if(!c.getString("Name").equals(args[1])) {
                 nlist.add(attrmod.get(i));
             }
@@ -635,7 +623,7 @@ public class ItemizerPlugin extends JavaPlugin {
         item.setItemMeta(meta);
     }
 
-    private NBTTagList getAttrList(net.minecraft.server.v1_8_R1.ItemStack nms) {
+    private NBTTagList getAttrList(net.minecraft.server.v1_8_R2.ItemStack nms) {
         if(nms.getTag() == null) {
             nms.setTag(new NBTTagCompound());
         }
