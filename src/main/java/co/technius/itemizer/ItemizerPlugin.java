@@ -1,14 +1,18 @@
 package co.technius.itemizer;
 
-import net.minecraft.server.v1_8_R2.*;
+import net.minecraft.server.v1_8_R3.*;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_8_R2.inventory.CraftItemStack;
+import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.*;
+import org.bukkit.permissions.Permission;
+import org.bukkit.permissions.PermissionDefault;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -57,8 +61,52 @@ public class ItemizerPlugin extends JavaPlugin {
         new CmdDesc("/itemizer potion list", "Lists all potion effects", "itemizer.potion")
     };
 
+    PluginManager pm;
+    Permission permLore;
+    Permission permAttribute;
+    Permission permClear;
+    Permission permHead;
+    Permission permPotion;
+    Permission permAuthor;
+    Permission permTitle;
+    Permission permName;
+
+    @Override
+    public void onEnable() {
+        pm = Bukkit.getPluginManager();
+        permLore = new Permission("itemizer.lore", PermissionDefault.OP);
+        permAttribute = new Permission("itemizer.attribute", PermissionDefault.OP);
+        permClear = new Permission("itemizer.clear", PermissionDefault.OP);
+        permHead = new Permission("itemizer.head", PermissionDefault.OP);
+        permPotion = new Permission("itemizer.potion", PermissionDefault.OP);
+        permAuthor = new Permission("itemizer.author", PermissionDefault.OP);
+        permTitle = new Permission("itemizer.title", PermissionDefault.OP);
+        permName = new Permission("itemizer.name", PermissionDefault.OP);
+
+        pm.addPermission(permLore);
+        pm.addPermission(permAttribute);
+        pm.addPermission(permClear);
+        pm.addPermission(permHead);
+        pm.addPermission(permPotion);
+        pm.addPermission(permAuthor);
+        pm.addPermission(permTitle);
+        pm.addPermission(permName);
+    }
+
+    @Override
+    public void onDisable() {
+        pm.removePermission(permLore);
+        pm.removePermission(permAttribute);
+        pm.removePermission(permClear);
+        pm.removePermission(permHead);
+        pm.removePermission(permPotion);
+        pm.removePermission(permAuthor);
+        pm.removePermission(permTitle);
+        pm.removePermission(permName);
+    }
+
     public boolean advLoreAddCmd(CommandSender sender, String[] args) {
-        if(noPerm(sender, "itemizer.lore")) {
+        if(noPerm(sender, permLore)) {
             return true;
         }
         if(noConsole(sender)) {
@@ -90,7 +138,7 @@ public class ItemizerPlugin extends JavaPlugin {
             lore = im.getLore();
         }
         else {
-            lore = new ArrayList<String>();
+            lore = new ArrayList<>();
         }
         String[] lines = name.split("\\\\n");
         for(String line : lines) {
@@ -105,7 +153,7 @@ public class ItemizerPlugin extends JavaPlugin {
     }
 
     public boolean advLoreChangeCmd(CommandSender sender, String[] args) {
-        if(noPerm(sender, "itemizer.lore")) {
+        if(noPerm(sender, permLore)) {
             return true;
         }
         if(noConsole(sender)) {
@@ -189,7 +237,7 @@ public class ItemizerPlugin extends JavaPlugin {
     }
 
     public boolean advLoreRemoveCmd(CommandSender sender, String[] args) {
-        if(noPerm(sender, "itemizer.lore")) {
+        if(noPerm(sender, permLore)) {
             return true;
         }
         if(noConsole(sender)) {
@@ -233,7 +281,7 @@ public class ItemizerPlugin extends JavaPlugin {
     }
 
     public boolean attrAddCmd(CommandSender sender, String[] args) {
-        if(noPerm(sender, "itemizer.attribute")) {
+        if(noPerm(sender, permAttribute)) {
             return true;
         }
         if(noConsole(sender)) {
@@ -270,7 +318,7 @@ public class ItemizerPlugin extends JavaPlugin {
             return msg(sender, "\"" + ChatColor.RED + args[3] + "\" is not a valid number.");
         }
         //TODO Remove when an update is available
-        net.minecraft.server.v1_8_R2.ItemStack nms = CraftItemStack.asNMSCopy(player.getItemInHand());
+        net.minecraft.server.v1_8_R3.ItemStack nms = CraftItemStack.asNMSCopy(player.getItemInHand());
         NBTTagList attrmod = getAttrList(nms);
         for(int i = 0; i < attrmod.size(); i++) {
             NBTTagCompound c = attrmod.get(i);
@@ -326,7 +374,7 @@ public class ItemizerPlugin extends JavaPlugin {
     }
 
     public boolean attrListAllCmd(CommandSender sender, String[] args) {
-        if(noPerm(sender, "itemizer.attribute")) {
+        if(noPerm(sender, permAttribute)) {
             return true;
         }
         if(args.length != 1) {
@@ -345,7 +393,7 @@ public class ItemizerPlugin extends JavaPlugin {
     }
 
     public boolean attrListCmd(CommandSender sender, String[] args) {
-        if(noPerm(sender, "itemizer.attribute")) {
+        if(noPerm(sender, permAttribute)) {
             return true;
         }
         if(noConsole(sender)) {
@@ -355,7 +403,7 @@ public class ItemizerPlugin extends JavaPlugin {
             return usage(sender, "itemizer attr list");
         }
         Player player = (Player)sender;
-        net.minecraft.server.v1_8_R2.ItemStack nms = CraftItemStack.asNMSCopy(player.getItemInHand());
+        net.minecraft.server.v1_8_R3.ItemStack nms = CraftItemStack.asNMSCopy(player.getItemInHand());
         NBTTagList attrmod = getAttrList(nms);
         if(attrmod.size() == 0) {
             return msg(sender, ChatColor.YELLOW + "This item has no attributes.");
@@ -369,7 +417,7 @@ public class ItemizerPlugin extends JavaPlugin {
     }
 
     public boolean attrRemoveCmd(CommandSender sender, String[] args) {
-        if(noPerm(sender, "itemizer.attribute")) {
+        if(noPerm(sender, permAttribute)) {
             return true;
         }
         if(noConsole(sender)) {
@@ -380,7 +428,7 @@ public class ItemizerPlugin extends JavaPlugin {
         }
         Player player = (Player)sender;
         //TODO Remove when an update is available
-        net.minecraft.server.v1_8_R2.ItemStack nms = CraftItemStack.asNMSCopy(player.getItemInHand());
+        net.minecraft.server.v1_8_R3.ItemStack nms = CraftItemStack.asNMSCopy(player.getItemInHand());
         NBTTagList attrmod = getAttrList(nms);
         NBTTagList nlist = new NBTTagList();
         boolean r = false;
@@ -404,15 +452,15 @@ public class ItemizerPlugin extends JavaPlugin {
     }
 
     public boolean bookCmd(CommandSender sender, String[] args, boolean author) {
-        String a = (author ? "author" : "title");
-        if(noPerm(sender, "itemizer." + a)) {
+        Permission a = (author ? permAuthor : permTitle);
+        if(noPerm(sender, a)) {
             return true;
         }
         if(noConsole(sender)) {
             return true;
         }
         if(args.length <= 1) {
-            return usage(sender, "itemizer " + a + "<" + a + ">");
+            return usage(sender, "itemizer " + a.getName() + "<" + a.getName() + ">");
         }
         Player player = (Player)sender;
         ItemStack item = player.getItemInHand();
@@ -451,7 +499,7 @@ public class ItemizerPlugin extends JavaPlugin {
     }
 
     private String[] bumpArgs(String[] args) {
-        ArrayList<String> neverusethis = new ArrayList<String>();
+        ArrayList<String> neverusethis = new ArrayList<>();
         for(int i = 1; i < args.length; i++) {
             neverusethis.add(args[i]);
         }
@@ -459,7 +507,7 @@ public class ItemizerPlugin extends JavaPlugin {
     }
 
     public boolean clearAllCmd(CommandSender sender, String[] args) {
-        if(noPerm(sender, "itemizer.clear")) {
+        if(noPerm(sender, permClear)) {
             return true;
         }
         if(noConsole(sender)) {
@@ -484,7 +532,7 @@ public class ItemizerPlugin extends JavaPlugin {
     }
 
     public boolean clearCmd(CommandSender sender, String[] args) {
-        if(noPerm(sender, "itemizer.clear")) {
+        if(noPerm(sender, permClear)) {
             return true;
         }
         if(noConsole(sender)) {
@@ -498,7 +546,7 @@ public class ItemizerPlugin extends JavaPlugin {
         if(item == null) {
             return msg(sender, ChatColor.RED + "You need to hold an item in your hand!");
         }
-        ArrayList<Integer> params = new ArrayList<Integer>();
+        ArrayList<Integer> params = new ArrayList<>();
         for(int i = 1; i < args.length; i++) {
             String s = args[i];
             if(s.equalsIgnoreCase("name")) {
@@ -588,7 +636,7 @@ public class ItemizerPlugin extends JavaPlugin {
         else if(action == LORE) {
             String[] d = data.split(" ");
             String temp = null;
-            ArrayList<String> n = new ArrayList<String>();
+            ArrayList<String> n = new ArrayList<>();
             for(String s : d) {
                 if(temp == null) {
                     temp = "" + s;
@@ -613,7 +661,7 @@ public class ItemizerPlugin extends JavaPlugin {
             if(temp != null) {
                 n.add(temp);
             }
-            ArrayList<String> fin = new ArrayList<String>();
+            ArrayList<String> fin = new ArrayList<>();
             for(String s : n) {
                 String[] t = s.split("\\\\n");
                 fin.addAll(Arrays.asList(t));
@@ -623,7 +671,7 @@ public class ItemizerPlugin extends JavaPlugin {
         item.setItemMeta(meta);
     }
 
-    private NBTTagList getAttrList(net.minecraft.server.v1_8_R2.ItemStack nms) {
+    private NBTTagList getAttrList(net.minecraft.server.v1_8_R3.ItemStack nms) {
         if(nms.getTag() == null) {
             nms.setTag(new NBTTagCompound());
         }
@@ -635,7 +683,7 @@ public class ItemizerPlugin extends JavaPlugin {
     }
 
     public boolean headCmd(CommandSender sender, String[] args) {
-        if(noPerm(sender, "itemizer.head")) {
+        if(noPerm(sender, permHead)) {
             return true;
         }
         if(noConsole(sender)) {
@@ -666,7 +714,7 @@ public class ItemizerPlugin extends JavaPlugin {
                 return msg(sender, ChatColor.RED + "\"" + args[1] + "\" is not a valid number");
             }
         }
-        ArrayList<String> d = new ArrayList<String>();
+        ArrayList<String> d = new ArrayList<>();
         int max = 1;
         int cmda = 0;
         for(int i = 0; i < help.length; i++) {
@@ -706,7 +754,7 @@ public class ItemizerPlugin extends JavaPlugin {
         return true;
     }
 
-    private boolean noPerm(CommandSender sender, String node) {
+    private boolean noPerm(CommandSender sender, Permission node) {
         if(sender.hasPermission(node)) {
             return false;
         }
@@ -801,7 +849,7 @@ public class ItemizerPlugin extends JavaPlugin {
     }
 
     public boolean potionAddCmd(CommandSender sender, String[] args) {
-        if(noPerm(sender, "itemizer.potion")) {
+        if(noPerm(sender, permPotion)) {
             return true;
         }
         if(noConsole(sender)) {
@@ -873,11 +921,11 @@ public class ItemizerPlugin extends JavaPlugin {
     }
 
     public boolean potionListCmd(CommandSender sender, String[] args) {
-        if(noPerm(sender, "itemizer.potion")) {
+        if(noPerm(sender, permPotion)) {
             return true;
         }
         StringBuilder sb = new StringBuilder();
-        ArrayList<String> n = new ArrayList<String>();
+        ArrayList<String> n = new ArrayList<>();
         for(PotionEffectType e : PotionEffectType.values()) {
             if(e != null) {
                 n.add(e.getName().toLowerCase());
@@ -899,7 +947,7 @@ public class ItemizerPlugin extends JavaPlugin {
     }
 
     public boolean potionRemoveCmd(CommandSender sender, String[] args) {
-        if(noPerm(sender, "itemizer.potion")) {
+        if(noPerm(sender, permPotion)) {
             return true;
         }
         if(noConsole(sender)) {
@@ -938,8 +986,8 @@ public class ItemizerPlugin extends JavaPlugin {
     }
 
     public boolean renameCmd(CommandSender sender, String[] args, boolean lore) {
-        String a = (lore ? "lore" : "name");
-        if(noPerm(sender, "itemizer." + a)) {
+        Permission a = (lore ? permLore : permName);
+        if(noPerm(sender, a)) {
             return true;
         }
         if(noConsole(sender)) {
@@ -963,7 +1011,7 @@ public class ItemizerPlugin extends JavaPlugin {
             }
         }
         displayAction(item, col(name), (lore ? LORE : NAME));
-        sender.sendMessage(ChatColor.GREEN + "The " + a + " of the item in your hand has been set to \"" + name + "\"!");
+        sender.sendMessage(ChatColor.GREEN + "The " + a.getName() + " of the item in your hand has been set to \"" + name + "\"!");
         return true;
     }
 
@@ -980,7 +1028,7 @@ public class ItemizerPlugin extends JavaPlugin {
         private final int op;
         private final String name;
 
-        private Attributes(int op, String name) {
+        Attributes(int op, String name) {
             this.op = op;
             this.name = name;
         }
